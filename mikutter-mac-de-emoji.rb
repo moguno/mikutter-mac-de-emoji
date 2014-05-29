@@ -1,21 +1,59 @@
 # -*- coding: utf-8 -*-
 
-module Pango
+# フォント定義
+class Pango::FontDescription
   class << self
-    alias parse_markup_org parse_markup
+    alias :new_org :new
 
-    def parse_markup(text)
-      @regex ||= Regexp.new(/([\u{1F300}-\u{1F55B}]+)/) 
+    def new(*args)
+      tmp = new_org(*args)
 
-      emojied_text = text.gsub(@regex) {
-        "<span font_family=\"Apple カラー絵文字\">#{$1}</span>"
-      }
+      if UserConfig[:emoji_font]
+        tmp.family += ",#{UserConfig[:emoji_font]}"
+      end
 
-      parse_markup_org(emojied_text)
+      tmp
     end
   end
 end
 
 
 Plugin.create(:mikutter_mac_de_emoji) {
+
+  # 良く知られている絵文字フォント
+  @wellknown_emoji_fonts =  [
+    "Apple カラー絵文字",
+    "Segoe UI Symbol",
+  ]
+
+
+  # フォントの一覧を得る
+  def get_font_list
+    @tmp_widget ||= Gtk::VBox.new
+    @tmp_widget.pango_context.list_families.map { |f| f.name }
+  end
+
+
+  # デフォルトの絵文字フォントを設定する
+  if !UserConfig[:emoji_font]
+    fonts = get_font_list
+
+    # 良く知られているフォントが存在すればそれにする
+    @wellknown_emoji_fonts.each { |font|
+      if fonts.include?(font)
+        UserConfig[:emoji_font] = font
+        break
+      end
+    }
+  end
+
+
+  # 設定
+  settings("絵文字") {
+    fonts = {}
+
+    get_font_list.each { |font| fonts[font] = font }
+
+    select("絵文字フォント", :emoji_font, fonts) 
+  }
 }
