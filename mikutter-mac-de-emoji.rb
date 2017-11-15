@@ -30,7 +30,7 @@ Plugin.create(:mikutter_mac_de_emoji) {
   # フォントの一覧を得る
   def get_font_list
     @tmp_widget ||= Gtk::VBox.new
-    @tmp_widget.pango_context.list_families.map { |f| f.name }
+    @tmp_widget.pango_context.families.map { |f| f.name }
   end
 
 
